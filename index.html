@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Enkash Analytics — Master Validator v3 (Standalone)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F3EE;color:#1A1918;font-size:13px;line-height:1.5;overflow:hidden}
+.topbar{background:#18181B;color:#F4F3EE;padding:0 20px;height:48px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:14px;font-weight:500;flex:1}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,#7C3AED,#2563EB);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;color:#fff}
+.main{display:grid;grid-template-columns:240px 1fr;height:calc(100vh - 48px);overflow:hidden}
+/* SIDEBAR */
+.sidebar{background:#fff;border-right:1px solid #E6E5E0;overflow-y:auto;display:flex;flex-direction:column}
+.sh{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#bbb;padding:12px 16px 4px}
+.navitem{padding:8px 16px;display:flex;align-items:center;gap:8px;font-size:12px;color:#555;border-left:3px solid transparent;cursor:pointer;transition:all .1s}
+.navitem:hover{background:#F4F3EE;color:#222}
+.navitem.active{border-left-color:#7C3AED;background:#F0EEFF;color:#5B21B6;font-weight:600}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.nbadge{font-size:10px;padding:1px 7px;border-radius:99px;font-weight:600;margin-left:auto}
+.sidebar-footer{margin-top:auto;padding:10px 12px;border-top:1px solid #EEEEE9;display:flex;flex-direction:column;gap:6px}
+/* CONTENT */
+.content{overflow-y:auto;padding:20px;height:100%}
+.pane{display:none}
+.pane.active{display:block}
+/* CARDS */
+.card{background:#fff;border:1px solid #E6E5E0;border-radius:10px;margin-bottom:14px;overflow:hidden}
+.card-head{padding:12px 16px;border-bottom:1px solid #EEEEE9;display:flex;align-items:center;gap:10px}
+.card-head h3{font-size:13px;font-weight:600;flex:1}
+.card-body{padding:14px 16px}
+/* BUTTONS */
+.btn{cursor:pointer;border-radius:6px;font-size:12px;font-weight:500;padding:7px 14px;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-purple{background:#7C3AED;color:#fff}.btn-purple:hover{background:#6D28D9}
+.btn-purple:disabled{background:#C4B5FD;cursor:not-allowed}
+.btn-ghost{background:#F4F3EE;color:#555;border:1px solid #E0DFD8}.btn-ghost:hover{background:#E8E7E2}
+.btn-green{background:#fff;color:#16a34a;border:1px solid #BBF7D0}.btn-green:hover{background:#F0FDF4}
+.btn-red{background:#fff;color:#DC2626;border:1px solid #FECACA}.btn-red:hover{background:#FEF2F2}
+.btn-sm{padding:4px 10px;font-size:11px}
+/* FORMS */
+.inp{width:100%;border:1px solid #E0DFD8;border-radius:6px;padding:7px 10px;font-size:12px;background:#fff;color:#1A1918}
+.inp:focus{outline:none;border-color:#7C3AED}
+textarea.inp{font-family:monospace;font-size:11px;resize:vertical;min-height:70px}
+select.inp{cursor:pointer}
+.form-row{display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:start;margin-bottom:10px}
+.form-label{font-size:11px;font-weight:600;color:#666;padding-top:8px}
+/* CODE BLOCK */
+.codeblock{background:#18181B;color:#A7F3D0;font-family:'Courier New',monospace;font-size:11px;padding:12px 14px;border-radius:8px;line-height:1.8;white-space:pre-wrap;overflow:auto;max-height:240px;position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;font-size:10px;padding:3px 8px;border-radius:4px;background:#333;color:#aaa;border:none;cursor:pointer}
+/* RULE CARDS */
+.rule-card{background:#fff;border:1px solid #E6E5E0;border-radius:8px;margin-bottom:8px}
+.rule-header{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;cursor:pointer;user-select:none}
+.rule-header:hover{background:#FAFAF8;border-radius:8px 8px 0 0}
+.rule-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.rule-meta{flex:1;min-width:0}
+.rule-title{font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.rule-sub{font-size:10px;color:#888;margin-top:3px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rule-actions{display:flex;gap:5px;flex-shrink:0;margin-top:1px}
+.rule-edit-body{padding:14px;background:#FAFAF8;border-top:1px solid #EEEEE9;display:none}
+.rule-edit-body.open{display:block}
+/* BADGES/TAGS */
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600}
+.t-red{background:#FEE2E2;color:#991B1B}
+.t-amber{background:#FEF3C7;color:#92400E}
+.t-green{background:#DCFCE7;color:#166534}
+.t-blue{background:#DBEAFE;color:#1D4ED8}
+.t-gray{background:#F3F4F6;color:#374151}
+.t-purple{background:#EDE9FE;color:#5B21B6}
+/* RESULT ITEMS */
+.result-item{border:1px solid #E6E5E0;border-radius:8px;margin-bottom:7px;background:#fff}
+.result-head{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;cursor:pointer}
+.result-head:hover{background:#FAFAF8}
+.result-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.r-pass{background:#DCFCE7;color:#15803D}
+.r-fail{background:#FEE2E2;color:#B91C1C}
+.r-warn{background:#FEF3C7;color:#B45309}
+.r-na{background:#F3F4F6;color:#6B7280}
+.result-body{padding:10px 14px;background:#FAFAF8;border-top:1px solid #EEEEE9;display:none}
+.result-body.open{display:block}
+.spec-highlight{background:#EDE9FE;border-left:3px solid #7C3AED;border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;line-height:1.7;color:#3B0764;margin-bottom:8px}
+.finding-ok{background:#18181B;color:#A7F3D0;font-family:monospace;font-size:11px;padding:8px 12px;border-radius:6px;line-height:1.7;white-space:pre-wrap;margin-bottom:8px}
+.finding-fail{background:#18181B;color:#FCA5A5;font-family:monospace;font-size:11px;padding:8px 12px;border-radius:6px;line-height:1.7;white-space:pre-wrap;margin-bottom:8px}
+.fix-note{background:#FEF3C7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;line-height:1.7;color:#92400E}
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid #E6E5E0;border-radius:8px;padding:10px 12px;text-align:center}
+.stat-val{font-size:22px;font-weight:700}
+.stat-lbl{font-size:10px;color:#888;margin-top:2px}
+/* TAB ROW */
+.tab-bar{display:flex;border-bottom:1px solid #E6E5E0;margin-bottom:14px;gap:0}
+.tbar-item{padding:7px 14px;font-size:12px;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tbar-item.active{color:#7C3AED;border-bottom-color:#7C3AED;font-weight:600}
+/* NOTICES */
+.notice-info{background:#EDE9FE;border:1px solid #C4B5FD;border-radius:7px;padding:10px 14px;font-size:12px;color:#4C1D95;line-height:1.6;margin-bottom:12px}
+.notice-warn{background:#FEF3C7;border:1px solid #FDE68A;border-radius:7px;padding:10px 14px;font-size:12px;color:#92400E;line-height:1.6;margin-bottom:12px}
+.notice-ok{background:#DCFCE7;border:1px solid #BBF7D0;border-radius:7px;padding:10px 14px;font-size:12px;color:#14532D;line-height:1.6;margin-bottom:10px}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:16px 20px;border-bottom:1px solid #EEEEE9;display:flex;align-items:center;gap:10px}
+.modal-head h3{font-size:14px;font-weight:600;flex:1}
+.modal-body{padding:20px}
+.modal-footer{padding:12px 20px;border-top:1px solid #EEEEE9;display:flex;gap:8px;justify-content:flex-end}
+/* MISC */
+.section-sep{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding:10px 0 6px;margin-top:10px;border-top:1px solid #E6E5E0;display:flex;align-items:center;gap:8px}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid #E0DFD8;border-top-color:#7C3AED;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.req-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #EEEEE9;font-size:11px}
+.req-row:last-child{border-bottom:none}
+.req-url{flex:1;font-family:monospace;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+#toast{position:fixed;bottom:20px;right:20px;background:#18181B;color:#F4F3EE;padding:10px 16px;border-radius:8px;font-size:12px;z-index:999;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:340px}
+.saved-flash{animation:flash .4s ease}
+@keyframes flash{0%{background:#DCFCE7}100%{background:#fff}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- ADD RULE MODAL -->
+<div class="modal-overlay" id="add-rule-modal">
+<div class="modal">
+  <div class="modal-head">
+    <h3 id="modal-title">Add new rule</h3>
+    <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕ Close</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-row">
+      <div class="form-label">Section</div>
+      <select class="inp" id="m-section">
+        <option>Summary</option><option>Leakages</option><option>Savings</option>
+        <option>Capital Plan</option><option>Trends</option><option>Locations</option><option>Cross-tab</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Analytics tab</div>
+      <select class="inp" id="m-tab">
+        <option>Core &amp; Prime+</option><option>Prime+</option><option>Core</option><option>All</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Rule label</div>
+      <input class="inp" id="m-label" placeholder="e.g. avg_bill_per_ca denominator check">
+    </div>
+    <div class="form-row">
+      <div class="form-label">Critical?</div>
+      <select class="inp" id="m-critical">
+        <option value="true">Yes — Critical (highlighted in results)</option>
+        <option value="false">No — Standard</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-label">API response path</div>
+      <input class="inp" id="m-apipath" placeholder="e.g. kpis.total_leakage_inr">
+    </div>
+    <div class="form-row">
+      <div class="form-label">Spec / Logic</div>
+      <textarea class="inp" id="m-spec" rows="4" placeholder="Describe the exact formula or rule. Be precise — the AI uses this to validate."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-label">DB field names</div>
+      <textarea class="inp" id="m-fields" rows="2" placeholder="e.g. Bill Amount, Power Factor, Billpay Status"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Check type</div>
+      <select class="inp" id="m-checktype">
+        <option value="presence">Presence — field exists in response</option>
+        <option value="range">Range — value within min/max</option>
+        <option value="sum_to_100">Sum to 100% — two fields add up</option>
+        <option value="cross_tab">Cross-tab — value matches across tabs</option>
+        <option value="no_period_param">No period param — URL check</option>
+        <option value="week_reconcile">Week reconcile — capital plan sum</option>
+        <option value="exact_count">Exact count — array length</option>
+        <option value="funnel">Funnel — stages in order</option>
+        <option value="component_sum">Component sum — parts = total</option>
+        <option value="ai_only">AI only — AI judges from spec</option>
+      </select>
+    </div>
+    <div id="m-range-fields" style="display:none">
+      <div class="form-row">
+        <div class="form-label">Range field key</div>
+        <input class="inp" id="m-rangefield" placeholder="e.g. weighted_avg_pf">
+      </div>
+      <div class="form-row">
+        <div class="form-label">Min value</div>
+        <input class="inp" type="number" id="m-rangemin" value="0">
+      </div>
+      <div class="form-row">
+        <div class="form-label">Max value</div>
+        <input class="inp" type="number" id="m-rangemax" value="100">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Check note / fix hint</div>
+      <textarea class="inp" id="m-note" rows="2" placeholder="What to check manually, or fix hint if this rule fails"></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-purple" onclick="saveNewRule()">Save rule</button>
+  </div>
+</div>
+</div>
+
+<div class="topbar">
+  <div class="logo">EV</div>
+  <h1>Enkash Analytics — Master Validator <span style="font-size:11px;color:#777;font-weight:400">v3 · Editable rules · Saved in this browser</span></h1>
+  <span id="rules-badge" style="font-size:11px;color:#777" title="Rules are saved in this browser only (localStorage). Export/Import JSON to share rule sets across machines."></span>
+</div>
+
+<div class="main">
+<div class="sidebar">
+  <div class="sh">Validate</div>
+  <div class="navitem active" data-pane="capture"><div class="ndot" style="background:#3B82F6"></div>1 · Capture &amp; Paste</div>
+  <div class="navitem" data-pane="run"><div class="ndot" style="background:#EF4444"></div>2 · Run &amp; Results</div>
+  <div class="sh">Edit Rules</div>
+  <div class="navitem" data-pane="rules-Summary"><div class="ndot" style="background:#6366F1"></div>Summary tab <span class="nbadge" id="badge-Summary" style="background:#EEEEFF;color:#6366F1">0</span></div>
+  <div class="navitem" data-pane="rules-Leakages"><div class="ndot" style="background:#EF4444"></div>Leakages tab <span class="nbadge" id="badge-Leakages" style="background:#FEF2F2;color:#EF4444">0</span></div>
+  <div class="navitem" data-pane="rules-Savings"><div class="ndot" style="background:#10B981"></div>Savings tab <span class="nbadge" id="badge-Savings" style="background:#F0FDF4;color:#10B981">0</span></div>
+  <div class="navitem" data-pane="rules-Capital Plan"><div class="ndot" style="background:#F59E0B"></div>Capital Plan <span class="nbadge" id="badge-Capital Plan" style="background:#FFFBEB;color:#F59E0B">0</span></div>
+  <div class="navitem" data-pane="rules-Trends"><div class="ndot" style="background:#8B5CF6"></div>Trends tab <span class="nbadge" id="badge-Trends" style="background:#F5F3FF;color:#8B5CF6">0</span></div>
+  <div class="navitem" data-pane="rules-Locations"><div class="ndot" style="background:#06B6D4"></div>Locations tab <span class="nbadge" id="badge-Locations" style="background:#ECFEFF;color:#06B6D4">0</span></div>
+  <div class="navitem" data-pane="rules-Cross-tab"><div class="ndot" style="background:#EC4899"></div>Cross-tab checks <span class="nbadge" id="badge-Cross-tab" style="background:#FDF2F8;color:#EC4899">0</span></div>
+  <div class="sh">Reference</div>
+  <div class="navitem" data-pane="fields"><div class="ndot" style="background:#64748B"></div>225 field reference</div>
+  <div class="sidebar-footer">
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px" onclick="exportAllRules()">↓ Export all rules (.json)</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px" onclick="document.getElementById('import-input').click()">↑ Import rules (.json)</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importRules(this)">
+  </div>
+</div>
+
+<div class="content" id="main-content">
+
+<!-- CAPTURE PANE -->
+<div class="pane active" id="pane-capture">
+<div class="card">
+  <div class="card-head"><h3>Step 1 — Capture live API calls from your Enkash analytics page</h3></div>
+  <div class="card-body">
+    <p style="font-size:12px;color:#555;margin-bottom:10px">Open your analytics page in Chrome → F12 → Console → paste script below → Enter. Then navigate all tabs. Script captures every API call silently.</p>
+    <div class="codeblock" id="inj-code"><button class="copy-btn" onclick="copyInject()">Copy</button>(function(){
+  window.__ELV={calls:[],_f:window.fetch,_x:XMLHttpRequest.prototype.open};
+  window.fetch=async function(...a){
+    const url=typeof a[0]==='string'?a[0]:(a[0]?.url||'');
+    const opt=a[1]||{};const t=Date.now();
+    const res=await window.__ELV._f.apply(this,a);
+    res.clone().json().then(d=>{
+      window.__ELV.calls.push({method:(opt.method||'GET').toUpperCase(),
+        url,params:pP(url),response:d,status:res.status,
+        ms:Date.now()-t,ts:new Date().toISOString()});
+      console.log('%c[ELV] Captured: '+url,'color:#4ade80;font-weight:bold');
+    }).catch(()=>{});return res;
+  };
+  XMLHttpRequest.prototype.open=function(m,url){
+    this._u=url;this._m=m;
+    this.addEventListener('load',function(){
+      try{const d=JSON.parse(this.responseText);
+        window.__ELV.calls.push({method:(this._m||'GET').toUpperCase(),
+          url:this._u,params:pP(this._u),response:d,
+          status:this.status,ts:new Date().toISOString()});
+        console.log('%c[ELV] XHR: '+this._u,'color:#4ade80;font-weight:bold');
+      }catch(e){}});
+    return window.__ELV._x.apply(this,arguments);
+  };
+  function pP(u){try{const x=new URL(u,location.origin);const p={};x.searchParams.forEach((v,k)=>p[k]=v);return p;}catch(e){return{};}}
+  window.__elvExport=()=>{
+    copy(JSON.stringify(window.__ELV.calls,null,2));
+    console.log('%c[ELV] '+window.__ELV.calls.length+' calls copied — paste in validator','color:#fbbf24;font-weight:bold;font-size:13px');
+    return window.__ELV.calls.length+' calls';
+  };
+  console.log('%c[ELV] Active. Navigate: Summary → Leakages → Savings → Trends → Locations. Then run __elvExport()','color:#a78bfa;font-weight:bold;font-size:13px');
+})();</div>
+    <div class="notice-warn" style="margin-top:12px">After pasting: navigate <strong>Summary → Leakages → Savings → Trends → Locations</strong> tabs. Then run <code style="background:#F0E8FF;padding:1px 5px;border-radius:3px">__elvExport()</code> in console to copy all captured data.</div>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Paste captured JSON here</div>
+      <textarea class="inp" id="captured-json" rows="10" placeholder="Paste output of __elvExport() here..."></textarea>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn btn-purple" onclick="parseCaptured()">Parse captured calls →</button>
+      <button class="btn btn-ghost" onclick="loadDemo()">Load demo data (2 bugs)</button>
+    </div>
+    <div id="parse-status" style="margin-top:8px;font-size:12px"></div>
+  </div>
+</div>
+<div class="card" id="calls-preview" style="display:none">
+  <div class="card-head"><h3>Captured calls</h3><span id="calls-count-label" style="font-size:11px;color:#888"></span></div>
+  <div class="card-body">
+    <div id="calls-list" style="max-height:220px;overflow-y:auto;border:1px solid #E6E5E0;border-radius:7px"></div>
+    <div style="margin-top:10px"><button class="btn btn-purple" onclick="switchPane('run')">Next: Run validation →</button></div>
+  </div>
+</div>
+</div>
+
+<!-- RUN PANE -->
+<div class="pane" id="pane-run">
+<div id="pre-run-area">
+<div class="card">
+  <div class="card-head"><h3>Step 2 — Run validation against all active rules</h3></div>
+  <div class="card-body">
+    <div id="run-readiness" style="margin-bottom:12px"></div>
+    <div style="font-size:12px;color:#555;margin-bottom:10px">Active rules: <strong id="active-rules-count">0</strong> &nbsp;·&nbsp; Captures: <strong id="captures-count">0</strong></div>
+    <button class="btn btn-purple" id="run-btn" onclick="runAll()">▶ Run validation now</button>
+    <div id="run-progress" style="margin-top:10px;font-size:12px;color:#666"></div>
+  </div>
+</div>
+</div>
+<div id="results-area" style="display:none">
+  <div class="stats-row" id="results-stats"></div>
+  <div class="tab-bar">
+    <div class="tbar-item active" onclick="filterResults('all',this)">All findings</div>
+    <div class="tbar-item" onclick="filterResults('fail',this)">✗ Violations</div>
+    <div class="tbar-item" onclick="filterResults('warn',this)">⚠ Warnings</div>
+    <div class="tbar-item" onclick="filterResults('pass',this)">✓ Correct</div>
+    <div class="tbar-item" onclick="filterResults('na',this)">— N/A</div>
+  </div>
+  <div id="results-list"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn btn-ghost" onclick="exportReport()">↓ Export report</button>
+    <button class="btn btn-ghost" onclick="resetRun()">↺ Re-run</button>
+  </div>
+</div>
+</div>
+
+<!-- RULES PANES (one per section) -->
+<div class="pane" id="pane-rules-Summary"><div id="re-Summary"></div></div>
+<div class="pane" id="pane-rules-Leakages"><div id="re-Leakages"></div></div>
+<div class="pane" id="pane-rules-Savings"><div id="re-Savings"></div></div>
+<div class="pane" id="pane-rules-Capital Plan"><div id="re-Capital Plan"></div></div>
+<div class="pane" id="pane-rules-Trends"><div id="re-Trends"></div></div>
+<div class="pane" id="pane-rules-Locations"><div id="re-Locations"></div></div>
+<div class="pane" id="pane-rules-Cross-tab"><div id="re-Cross-tab"></div></div>
+
+<!-- FIELDS PANE -->
+<div class="pane" id="pane-fields">
+<div class="card">
+  <div class="card-head"><h3>225 fields from Utility_Consolidated_Report export</h3></div>
+  <div class="card-body">
+    <input class="inp" id="field-search" placeholder="Search field names..." style="margin-bottom:10px" oninput="filterFields(this.value)">
+    <div id="fields-list" style="columns:2;column-gap:16px;font-size:11px;line-height:2;font-family:monospace;color:#444"></div>
+  </div>
+</div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION — simple, bulletproof
+// ═══════════════════════════════════════════════════════════════════════════
+function switchPane(paneId){
+  // Hide all panes
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  // Remove active from all nav items
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+  // Show target pane
+  const target = document.getElementById('pane-'+paneId);
+  if(target) target.classList.add('active');
+  // Mark nav item active
+  const navItem = document.querySelector('[data-pane="'+paneId+'"]');
+  if(navItem) navItem.classList.add('active');
+  // Render rules pane if needed
+  if(paneId.startsWith('rules-')){
+    const section = paneId.replace('rules-','');
+    renderSection(section);
+  }
+  if(paneId==='run') refreshRunReadiness();
+  if(paneId==='fields') renderFields(FIELDS);
+}
+
+// Wire up nav clicks
+document.querySelectorAll('.navitem').forEach(item=>{
+  item.addEventListener('click', function(){
+    const pane = this.getAttribute('data-pane');
+    if(pane) switchPane(pane);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════════════
+function toast(msg, dur=2800){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.style.display='none', dur);
+}
+
+function copyInject(){
+  const code = document.getElementById('inj-code').innerText.replace('Copy','').trim();
+  navigator.clipboard.writeText(code).then(()=>toast('Interceptor script copied!'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 225 FIELDS
+// ═══════════════════════════════════════════════════════════════════════════
+const FIELDS=["EnKash ID","Consumer Number","Custom Param 1","Custom Param 2","Custom Param 3","Custom Param 4","Bill Number","Biller ID","Customer Reference ID","Biller Name","Branch Code","Branch Name","Customer Name","Bill Date","Bill Due Date","Bill Start Date","Bill End Date","Bill Month","Billed Days","Billing Period","Bill Amount","Fetched Amount","Surcharge","Surcharge GST","Payable Amount","Amount Before Due Date","Amount After Due Date","Early Payment Date","Early Payment Amount","Early Discount","Digital Payment Benefit","Prompt Payment Due Date","Prompt payment reversal","Late Payment Amount","Late Payment Penalty","Penalty","Opening Meter Reading Date","Closing Meter Reading Date","Start Reading (KWH)","End Reading (KWH)","Unit Difference (KWH)","KWMF","Start Reading (KVAH)","End Reading (KVAH)","Unit Difference (KVAH)","Final Unit Difference","Consumed Units KVAH","Second Meter Number","Opening Meter Reading Date Meter 2","Closing Meter Reading Date Meter 2","Start Reading (KWH) Meter 2","End Reading (KWH) Meter 2","Unit Consumption (KWH) Meter 2","Start Reading (KVAH) Meter 2","End Reading (KVAH) Meter 2","Consumed Units (KVAH) Meter 2","Unit Consumption","Consumption (in KVAH/KWH)","Start Reading (KG)","End Reading (KG)","Multiplying Factor","Billed Unit","Adjustment Unit","Wheeled Unit","Power Factor","Power Factor Penalty","Rebate","Due Date Rebate Adjustment","Bill Demand","Maximum Demand","Maximum Demand (KVA)","Contract Demand","KVA 40% Demand","Sanctioned Load","Connected Load","MDI Sanctioned Load","Excess Demand Charges","Load Factor Amount","Fixed Amount","Arrear Amount","Arrear LPSC","DPC On Arrear","LPSC on Theft Assessment","LPSC Reversal","Current LPS","DPS Current Month","Energy Charges","Fuel Surcharge","Development Charges","Regulatory Charges","PPAC Charges","Miscellaneous Charges","Minimum Charges","Green Energy Charges","Transmission Charge","Wheeled Energy Charge","Electricity Surcharge","VCR Charges","Theft And Manipulations","Government Subsidy","Progressive Subsidy","Subsidy Amount","Government Duty","Armoured Cable Cost","Sundry Allowance","Sundry Charges","Compensation Amount","Other Penalties","Other Charges","Provisional Adjustment","Other Arrears","Total Arrears","Other Incentive","Tax And Duties","Tariff","Green Tariff (KWH)","IGST","CGST","SGST","TCS","TDS","TOD Tariff","Wheeling Energy Tax","Security Deposit","Interest On Security Deposit","Tax On Security Deposit","Additional Security Deposit","Tax on Interest on SD","TDS Refund","Penalty Refund","Security Refund","Other Refund","Previous Unpaid Bill Arrears","Previous Adjustment Amount","Previous Amount Paid","Previous Amount Paid Date","Last Payment Receipt No.","Meter Number","Meter Status","Meter Rent","Meter Security","Meter Replacement Charges","Credit","Debit","MR/NR","Cowcess Amount","Capacitor Surcharge","MCB CTPT Rental","Category","Phase","Connection Type","Bill Type","Enterprise ID","Enterprise Name","Biller Category","Biller Code","Cost Center","City","State","Circle Code","Division","Subdivision","Customer Address","Business Name","Company Code","Server","Created Date & Time","Bill Creation Source","Bill Fetch TimeStamp","Bill Copy Status","Maker User","Maker Approved Date & Time","Checker User","Checker Approved Date & Time","Approval Status","Approval Remarks","Last Transaction Attempt Date","Payment Date","Bill Status","Payment Failure Reason","Bill Expiry Reason","Payment Mode","Bank Card Number","Alias Name","Name On Card","Beneficiary Account Number","Beneficiary Name","Name of Bank","IFSC Code","Billpay Status","Billpay Date","BBPS Transaction ID","Billpay Failure Reason","PG Transaction ID","Bank Reference ID","Refund Date & Time","Refund Transaction ID","Reference ID","Prepaid amount as per bill","Prepaid Recharge amount","Feeder Code","Bill Basis","Disconnection Date","Other Positive Entry_1","Other Positive Entry_2","Other Positive Entry_3","Other Negative Entry_1","Other Negative Entry_2","Error Message","Exception In Bill","Attachment URL","File Name","Remarks","Bill Created By","External Transaction Id","Bill Pay Partner","Request Id","Bill Copy Request Id","Bill Copy Requested Date","Bill Copy Received Date","Payout Status","Payout Date","Payout Mode","PG Name","Paid To Biller"];
+function renderFields(arr){document.getElementById('fields-list').innerHTML=arr.map((f,i)=>`<div>${i+1}. ${f}</div>`).join('');}
+function filterFields(q){renderFields(FIELDS.filter(f=>f.toLowerCase().includes(q.toLowerCase())));}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEFAULT RULES
+// ═══════════════════════════════════════════════════════════════════════════
+const DEFAULT_RULES=[
+  // SUMMARY
+  {id:'SM1',section:'Summary',tab:'Core & Prime+',label:'Portfolio value = SUM(bill_amount) after dedup',critical:true,enabled:true,apiPath:'portfolio_value_inr',spec:'SUM(COALESCE(bill_amount, fetched_amount)) after ROW_NUMBER() OVER (PARTITION BY enkash_id ORDER BY bill_fetch_timestamp DESC)=1 dedup. Source: Bill Amount (preferred), fallback Fetched Amount. One row per (consumer_number, bill_month).',fields:'Bill Amount, Fetched Amount, Bill Fetch TimeStamp, EnKash ID',checkType:'presence',checkNote:'Verify value is non-zero and non-null. portfolio_value / avg_bill_per_ca should ≈ active_cas count.'},
+  {id:'SM2',section:'Summary',tab:'Core & Prime+',label:'Avg bill per CA = portfolio / active_cas only',critical:true,enabled:true,apiPath:'avg_bill_per_ca_inr',spec:'avg_bill_per_ca = SUM(bill_amount) / COUNT(DISTINCT consumer_number WHERE status=ACTIVE). Denominator = active CAs only, never all CAs including inactive. Source: Consumer Number with status=ACTIVE from company_biller.',fields:'Consumer Number, Bill Amount, Bill Month',checkType:'derivation',checkNote:'avg_bill_per_ca × active_cas should ≈ portfolio_value (within 1%).'},
+  {id:'SM3',section:'Summary',tab:'Core & Prime+',label:'Paid via platform uses Billpay Status=SUCCESS',critical:true,enabled:true,apiPath:'paid_via_platform_pct',spec:'paid_via_platform_pct = SUM(bill_amount WHERE Billpay Status=SUCCESS) / total_bill × 100. Primary: join billpay_data on enkash_id and check status=SUCCESS. Fallback only when billpay_data absent: digital_payment_benefit>0 OR early_payment_amount>0. Must be 0-100.',fields:'Billpay Status, Digital Payment Benefit, Early Payment Amount',checkType:'range',rangeField:'paid_via_platform_pct',rangeMin:0,rangeMax:100,checkNote:'If >100% or <0%, denominator error.'},
+  {id:'SM4',section:'Summary',tab:'Core & Prime+',label:'Funnel: paid ≤ generated ≤ expected bills',critical:true,enabled:true,apiPath:'funnel.bills_paid, funnel.bills_generated, funnel.expected_bills',spec:'Active CAs → Expected bills (CAs × billing_freq) → Bills generated (COUNT DISTINCT enkash_id after dedup) → Bills paid (WHERE Billpay Status=SUCCESS). Each stage must be ≤ previous. fetch_rate = generated/expected × 100. conversion = paid/generated × 100.',fields:'Bill Status, Billpay Status, Bill Basis, EnKash ID',checkType:'funnel',checkNote:'bills_paid > bills_generated = impossible. bills_generated > expected = duplicate fetches.'},
+  {id:'SM5',section:'Summary',tab:'Core & Prime+',label:'Payment status counts sum to total_approved',critical:false,enabled:true,apiPath:'payment_status.paid + pending + on_hold + failed = total_approved',spec:'SUM(paid+pending+on_hold+failed) = total_approved_bills. Statuses from Billpay Status: SUCCESS=Paid, PENDING/INITIATED=Pending, FAILED/CANCELLED=Failed. Bills on approval hold counted separately.',fields:'Billpay Status, Approval Status',checkType:'sum_reconcile',checkNote:'Mismatch = unrecognised status values or dedup not applied before counting.'},
+  {id:'SM6',section:'Summary',tab:'Core & Prime+',label:'Fetch failed uses Bill Copy Status=FAILED',critical:false,enabled:true,apiPath:'action_required.fetch_failed',spec:'fetch_failed = COUNT(bills WHERE Bill Copy Status=FAILED AND Billpay Status != SUCCESS). These are BBPS errors blocking payment. Source: Bill Copy Status field.',fields:'Bill Copy Status, Billpay Status, Error Message',checkType:'presence',checkNote:'If 0 but Error Message has BBPS errors, count filter is wrong.'},
+  {id:'SM7',section:'Summary',tab:'Core & Prime+',label:'Due date calendar uses current month only',critical:false,enabled:true,apiPath:'due_date_calendar',spec:'Calendar shows bills by Bill Due Date in current calendar month. Overdue = Bill Due Date < CURRENT_DATE AND Billpay Status != SUCCESS. Never filtered by dashboard period filter.',fields:'Bill Due Date, Billpay Status',checkType:'presence',checkNote:'Calendar always shows live current month regardless of period filter.'},
+  // LEAKAGES
+  {id:'LK1',section:'Leakages',tab:'Prime+',label:'Total leakage = 4 types summed per bill',critical:true,enabled:true,apiPath:'kpis.total_leakage_inr',spec:'Per bill: total_leakage = COALESCE(power_factor_penalty,0) + COALESCE(excess_demand_charges,0) + lps_composite + COALESCE(load_factor_amount,0). LPS composite = COALESCE(late_payment_amount,0)+COALESCE(current_lps,0)+COALESCE(arrear_lpsc,0)+COALESCE(dpc_on_arrear,0)+COALESCE(dps_current_month,0)-COALESCE(lpsc_reversal,0). WARN: use MAX(late_payment_amount,current_lps) for discoms where both fields populated for same charge.',fields:'Power Factor Penalty, Excess Demand Charges, Late Payment Amount, Current LPS, Arrear LPSC, DPC On Arrear, DPS Current Month, LPSC Reversal, Load Factor Amount',checkType:'by_type_sum',checkNote:'by_type amounts must sum to total_leakage_inr within 1%.'},
+  {id:'LK2',section:'Leakages',tab:'Prime+',label:'Weighted avg PF = SUM(KVAH×PF)/SUM(KVAH)',critical:true,enabled:true,apiPath:'kpis.weighted_avg_pf',spec:'weighted_avg_pf = SUM(unit_difference_kvah × power_factor) / SUM(unit_difference_kvah). Weight = Unit Difference (KVAH) — NOT row count. Exclude: Power Factor IS NULL, =0, or >1.0. NEVER use simple average (SUM(pf)/COUNT).',fields:'Power Factor, Unit Difference (KVAH), Consumed Units KVAH',checkType:'range',rangeField:'weighted_avg_pf',rangeMin:0.5,rangeMax:1.0,checkNote:'If >0.98 suspect simple average. If <0.5 suspect wrong field.'},
+  {id:'LK3',section:'Leakages',tab:'Prime+',label:'avg_leakage_per_ca denominator = affected CAs',critical:true,enabled:true,apiPath:'kpis.avg_leakage_per_ca_inr',spec:'avg_leakage_per_ca = total_leakage_inr / COUNT(DISTINCT consumer_number WHERE leakage>0). Denominator = AFFECTED CAs only — CAs that have at least one leakage charge. NEVER divide by all active CAs.',fields:'Consumer Number, Power Factor Penalty, Excess Demand Charges, Late Payment Amount',checkType:'derivation',checkNote:'avg × cas_affected should ≈ total_leakage within 2%. If avg×all_cas ≈ total, wrong denominator.'},
+  {id:'LK4',section:'Leakages',tab:'Prime+',label:'by_type share_pct sum = ~100%',critical:true,enabled:true,apiPath:'by_type[*].share_pct',spec:'SUM(by_type[*].share_pct) must be 99–101%. Deviation = a type excluded from denominator or double-counted.',fields:'Power Factor Penalty, Excess Demand Charges, Late Payment Amount, Load Factor Amount',checkType:'by_type_sum',checkNote:'If sum deviates >1%, check total_leakage and by_type use same computation path.'},
+  {id:'LK5',section:'Leakages',tab:'Prime+',label:'LPS hit rate denominator = ALL bills',critical:false,enabled:true,apiPath:'kpis.lps_hit_rate_pct',spec:'lps_hit_rate_pct = COUNT(bills WHERE lps_total>0) / COUNT(ALL bills in period) × 100. Denominator = ALL bills not just leakage bills. Range 0–100.',fields:'Late Payment Amount, Current LPS, Arrear LPSC',checkType:'range',rangeField:'lps_hit_rate_pct',rangeMin:0,rangeMax:100,checkNote:'If >100, denominator is filtered bills only.'},
+  {id:'LK6',section:'Leakages',tab:'Prime+',label:'Excess demand uses billed field directly',critical:false,enabled:true,apiPath:'by_type excess demand entry',spec:'Excess demand leakage = Excess Demand Charges (billed field). Use Maximum Demand (KVA) for HT, Maximum Demand for LT. Trigger: Maximum Demand > Contract Demand. Never recompute from tariff rate.',fields:'Maximum Demand, Maximum Demand (KVA), Contract Demand, Excess Demand Charges, Connection Type',checkType:'presence',checkNote:'Excess demand must appear in by_type if any CA has excess_demand_charges>0.'},
+  // SAVINGS
+  {id:'SV1',section:'Savings',tab:'Prime+',label:'clean_rate + affected_rate = 100%',critical:true,enabled:true,apiPath:'kpis.clean_bill_rate_pct + kpis.affected_bill_rate_pct',spec:'clean_bill_rate = COUNT(bills WHERE leakage=0) / COUNT(ALL bills) × 100. affected_bill_rate = 100 - clean_bill_rate. Both use SAME denominator: COUNT(ALL bills in period). Sum must = 100%.',fields:'Bill Amount, Bill Month',checkType:'sum_to_100',sumFields:['clean_bill_rate_pct','affected_bill_rate_pct'],checkNote:'Sum ≠ 100% means two rates use different bill populations as denominator.'},
+  {id:'SV2',section:'Savings',tab:'Prime+',label:'avoidable_charges = leakage total (cross-tab)',critical:true,enabled:true,apiPath:'savings.kpis.avoidable_charges_inr vs leakage.kpis.total_leakage_inr',spec:'Savings tab avoidable_charges_inr must equal Leakages tab total_leakage_inr — same formula, same leakage_facts materialized view. Any divergence = two independent computation paths that will drift over time.',fields:'All leakage type fields',checkType:'cross_tab',crossFields:['total_leakage_inr','avoidable_charges_inr'],checkNote:'Gap >1% = consolidate to single leakage_facts view. Critical.'},
+  {id:'SV3',section:'Savings',tab:'Prime+',label:'potential_upside_inr ≥ 0',critical:true,enabled:true,apiPath:'incentives.potential_upside_inr',spec:'potential_upside = GREATEST(0, total_incentive_potential - total_earned). Cannot be negative. Apply MAX(0,...) guard server-side. Negative value = earned > potential = rate config error.',fields:'Digital Payment Benefit, Early Payment Amount, Power Factor Penalty',checkType:'range',rangeField:'potential_upside_inr',rangeMin:0,rangeMax:999999999999,checkNote:'Negative = check incentive_rate_config table entries.'},
+  {id:'SV4',section:'Savings',tab:'Prime+',label:'Incentive components sum to total_earned',critical:false,enabled:true,apiPath:'incentives.digital + early + pf = total_earned',spec:'total_earned = digital_payment_benefit_inr + early_payment_discount_inr + pf_incentive_earned_inr. Source: Digital Payment Benefit, Early Payment Amount, Rebate (pf incentive).',fields:'Digital Payment Benefit, Early Payment Amount, Rebate',checkType:'component_sum',checkNote:'Gap >2% = 4th incentive type not accounted or double-counting.'},
+  {id:'SV5',section:'Savings',tab:'Prime+',label:'PF saving excludes estimated bills (Bill Basis=E)',critical:true,enabled:true,apiPath:'kpis.pf_improvement_saving_inr',spec:'pf_improvement_saving = SUM(power_factor_penalty) WHERE power_factor<0.92 AND power_factor_penalty>0 AND Bill Basis=A (Actual only). Exclude Bill Basis=E (Estimated) — unreliable PF readings.',fields:'Power Factor, Power Factor Penalty, Bill Basis',checkType:'presence',checkNote:'If PF saving inflated, estimated bills may be included.'},
+  {id:'SV6',section:'Savings',tab:'Prime+',label:'Contract saving: per-CA P90 grain, not aggregate',critical:true,enabled:true,apiPath:'kpis.contract_revision_saving_inr',spec:'contract_saving computed per CA: p90_mdi = PERCENTILE_CONT(0.90) of MDI per CA over 12M. recommended_cd = CEIL(p90_mdi×1.15/10)×10. saving = excess_charges - extra_fixed_cost. Sum across CAs. NEVER on portfolio-average MDI.',fields:'Maximum Demand, Maximum Demand (KVA), Contract Demand, Excess Demand Charges, Load Factor Amount',checkType:'presence',checkNote:'If 0 and excess demand exists, verify per-CA computation grain.'},
+  {id:'SV7',section:'Savings',tab:'Prime+',label:'Clean bill: GREATEST(0, bill_amount - leakage)',critical:true,enabled:true,apiPath:'summary.clean_bill_amount_inr',spec:'Per bill: clean_amount = GREATEST(0, COALESCE(bill_amount, fetched_amount) - total_leakage_bill). GREATEST guard prevents negatives. clean + avoidable ≈ total bill (reconciliation identity).',fields:'Bill Amount, Fetched Amount',checkType:'reconcile',checkNote:'clean + avoidable ≈ total_bill within 1%. If not, GREATEST guard missing.'},
+  {id:'SV8',section:'Savings',tab:'Prime+',label:'Digital benefit sanity: ≤2% of total bill',critical:false,enabled:true,apiPath:'incentives.digital_payment_benefit_inr',spec:'Sanity: digital_payment_benefit_inr ≤ total_bill_generated × 0.02 (max 2% rate). Rate from incentive_rate_config table (not hardcoded). Source: Digital Payment Benefit field.',fields:'Digital Payment Benefit, Bill Amount, Energy Charges',checkType:'sanity_pct',numerator:'digital_payment_benefit_inr',denominator:'total_bill_generated_inr',maxPct:2,checkNote:'If >2%, rate config wrong or double-counted.'},
+  // CAPITAL PLAN
+  {id:'CP1',section:'Capital Plan',tab:'Core & Prime+',label:'No period/date params on capital plan URL',critical:true,enabled:true,apiPath:'/api/capital-plan/weekly URL params',spec:'Capital plan NEVER uses dashboard period filter. URL must NOT contain: start_date, end_date, view, period, start, end params. Always uses server CURRENT_DATE for month range.',fields:'Bill Due Date',checkType:'no_period_param',checkNote:'Any period param = critical bug.'},
+  {id:'CP2',section:'Capital Plan',tab:'Core & Prime+',label:'SUM(weeks.unpaid) = total_unpaid_inr',critical:true,enabled:true,apiPath:'weeks[*].unpaid vs total_unpaid_inr',spec:'API must assert SUM(weeks[*].unpaid)==total_unpaid_inr before responding. Return HTTP 500 reconciliation_failure if check fails.',fields:'Bill Due Date, Bill Amount, Billpay Status',checkType:'week_reconcile',checkNote:'Delta >1 = critical reconciliation failure.'},
+  {id:'CP3',section:'Capital Plan',tab:'Core & Prime+',label:'Always exactly 4 week rows returned',critical:true,enabled:true,apiPath:'weeks array length',spec:'Always return exactly 4 week objects. Cross-join VALUES(1),(2),(3),(4) to guarantee rows even for weeks with zero bills.',fields:'Bill Due Date',checkType:'exact_count',field:'weeks',expectedCount:4,checkNote:'Fewer than 4 = frontend renders partial bar chart.'},
+  {id:'CP4',section:'Capital Plan',tab:'Core & Prime+',label:'overdue ≤ unpaid for every week',critical:true,enabled:true,apiPath:'weeks[*].overdue ≤ weeks[*].unpaid',spec:'overdue is a subset of unpaid (due_date < CURRENT_DATE AND status!=SUCCESS). overdue > unpaid is impossible — indicates query join error.',fields:'Bill Due Date',checkType:'subset_check',checkNote:'Any week with overdue>unpaid = data error in backend join.'},
+  {id:'CP5',section:'Capital Plan',tab:'Core & Prime+',label:'Week 1 starts on day 1 of month (not ISO week)',critical:true,enabled:true,apiPath:'weeks[0].week_start',spec:'week_num = CASE WHEN day<=7 THEN 1 WHEN day<=14 THEN 2 WHEN day<=21 THEN 3 ELSE 4 END. day = DAY(due_date). NEVER use EXTRACT(WEEK FROM ...) or ISO week — they cross month boundaries.',fields:'Bill Due Date',checkType:'week_boundary',checkNote:'W1 must start on day 1. If not, ISO week buckets used.'},
+  {id:'CP6',section:'Capital Plan',tab:'Core & Prime+',label:'as_of_date present in response',critical:false,enabled:true,apiPath:'as_of_date',spec:'Response must include as_of_date: CURRENT_DATE from server. Cache TTL ≤15 minutes — overdue changes daily.',fields:'Bill Due Date',checkType:'field_present',field:'as_of_date',checkNote:'Missing = overdue computation is ambiguous.'},
+  {id:'CP7',section:'Capital Plan',tab:'Core & Prime+',label:'REVERSED billpay_status = UNPAID',critical:true,enabled:true,apiPath:'weeks unpaid filter',spec:'Unpaid = Billpay Status NOT IN (SUCCESS). Explicitly includes: PENDING, INITIATED, FAILED, REVERSED, NULL. REVERSED = payment returned, bill outstanding again.',fields:'Billpay Status, Bill Due Date',checkType:'param_check',checkNote:'SQL must use status!=SUCCESS not IN list so REVERSED auto-included.'},
+  // TRENDS
+  {id:'TR1',section:'Trends',tab:'Prime+',label:'X-axis: month names only, no year labels',critical:false,enabled:true,apiPath:'months[*].month',spec:'X-axis labels must show only month names (Jan, Feb...). Year only in filter chip and legend. Rule R1: xaxis_graph_specification.',fields:'Bill Month',checkType:'format_check',checkNote:'API returns YYYY-MM — frontend strips year for axis label.'},
+  {id:'TR2',section:'Trends',tab:'Prime+',label:'Future months null, past empty months = 0',critical:false,enabled:true,apiPath:'months[*].total null vs 0',spec:'Future month slots = null (no bar, line break). Past months with no bills = 0 (zero-height bar, tooltip "No bills this month"). spanGaps:false.',fields:'Bill Month',checkType:'null_vs_zero',checkNote:'null=future, 0=past-no-bills. If future=0 line will not break.'},
+  {id:'TR3',section:'Trends',tab:'Prime+',label:'Rolling 3M avg null for first 2 months',critical:false,enabled:true,apiPath:'months[*].rolling_3m_avg',spec:'rolling_3m_avg = AVG OVER (ROWS BETWEEN 2 PRECEDING AND CURRENT ROW). First 2 months must be null — insufficient prior data.',fields:'Bill Month',checkType:'presence',checkNote:'If first 2 months show rolling avg, window not correctly bounded.'},
+  // LOCATIONS
+  {id:'LC1',section:'Locations',tab:'Prime+',label:'State distribution sorted by spend or CA count',critical:false,enabled:true,apiPath:'state_distribution',spec:'State distribution: name, CA count, spend, share%. By Spend = SUM(bill_amount) per state. By CAs = COUNT(consumer_number). Both after dedup and period filter.',fields:'State, Consumer Number, Bill Amount',checkType:'presence',checkNote:'Sum of state spends ≈ portfolio_value.'},
+  {id:'LC2',section:'Locations',tab:'Prime+',label:'Top CA = MAX(SUM(bill_amount)) in period',critical:false,enabled:true,apiPath:'top_ca',spec:'top_ca = consumer_number with highest SUM(bill_amount) in selected period and filter scope. Display CA number, branch name, spend.',fields:'Consumer Number, Bill Amount, Branch Name',checkType:'presence',checkNote:'Verify top CA changes when state/branch filter applied.'},
+  // CROSS-TAB
+  {id:'XT1',section:'Cross-tab',tab:'All',label:'Leakage total = Savings avoidable charges',critical:true,enabled:true,apiPath:'leakage.total_leakage_inr vs savings.avoidable_charges_inr',spec:'Both values must be identical — single leakage_facts materialized view. Independent computation = they will diverge over time.',fields:'All leakage fields',checkType:'cross_tab',crossFields:['total_leakage_inr','avoidable_charges_inr'],checkNote:'Gap >1% = independent computation. Must consolidate.'},
+  {id:'XT2',section:'Cross-tab',tab:'All',label:'Capital plan isolated from period filter',critical:true,enabled:true,apiPath:'capital plan URL params vs other tabs',spec:'Leakages/Savings/Trends receive period params. Capital plan must NEVER receive them.',fields:'Bill Due Date',checkType:'param_isolation',checkNote:'Period param on capital plan call = critical bug.'},
+  {id:'XT3',section:'Cross-tab',tab:'All',label:'Filter params consistent across all tab calls',critical:false,enabled:true,apiPath:'state/branch/ca params',spec:'All tabs must receive identical state/branch/CA filter values. Inconsistency means filters not propagating correctly.',fields:'State, Branch Name, Consumer Number',checkType:'param_consistency',checkNote:'Compare state param across captured calls.'},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════════════════════
+let RULES=[];
+
+async function loadRules(){
+  try{
+    const raw=localStorage.getItem('enkash_rules_v3');
+    if(raw){
+      const saved=JSON.parse(raw);
+      const savedMap={};
+      saved.forEach(r=>savedMap[r.id]=r);
+      RULES=DEFAULT_RULES.map(dr=>savedMap[dr.id]?{...dr,...savedMap[dr.id]}:dr);
+      saved.filter(r=>!DEFAULT_RULES.find(dr=>dr.id===r.id)).forEach(r=>RULES.push(r));
+    }else{
+      RULES=JSON.parse(JSON.stringify(DEFAULT_RULES));
+    }
+  }catch(e){RULES=JSON.parse(JSON.stringify(DEFAULT_RULES));}
+  updateBadges();
+}
+
+async function saveRules(){
+  try{localStorage.setItem('enkash_rules_v3',JSON.stringify(RULES));toast('✓ Rules saved to this browser');}
+  catch(e){toast('Save error: '+e.message);}
+  updateBadges();
+}
+
+function updateBadges(){
+  const sections=['Summary','Leakages','Savings','Capital Plan','Trends','Locations','Cross-tab'];
+  sections.forEach(s=>{
+    const count=RULES.filter(r=>r.section===s&&r.enabled).length;
+    const badge=document.getElementById('badge-'+s);
+    if(badge)badge.textContent=count;
+  });
+  const total=RULES.filter(r=>r.enabled).length;
+  document.getElementById('rules-badge').textContent=`${total} active rules · ${RULES.length} total`;
+  const arc=document.getElementById('active-rules-count');
+  if(arc)arc.textContent=total;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RULE SECTION RENDERER
+// ═══════════════════════════════════════════════════════════════════════════
+const SEC_COLORS={Summary:'#6366F1',Leakages:'#EF4444',Savings:'#10B981','Capital Plan':'#F59E0B',Trends:'#8B5CF6',Locations:'#06B6D4','Cross-tab':'#EC4899'};
+
+function renderSection(section){
+  const container=document.getElementById('re-'+section);
+  if(!container)return;
+  const rules=RULES.filter(r=>r.section===section);
+  const color=SEC_COLORS[section]||'#7C3AED';
+  let html=`
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="width:10px;height:10px;border-radius:50%;background:${color}"></div>
+    <h2 style="font-size:15px;font-weight:700;flex:1">${section} — Rules</h2>
+    <button class="btn btn-green btn-sm" onclick="openAddModal('${section}')">+ Add rule</button>
+    <button class="btn btn-purple btn-sm" onclick="saveRules()">Save all</button>
+  </div>
+  <div class="notice-info">Click any rule to expand and edit. Save individual rules or use "Save all" to persist. The validator uses your saved rules every time you run.</div>`;
+
+  if(rules.length===0){
+    html+=`<div style="text-align:center;padding:30px;color:#888;font-size:12px;background:#fff;border-radius:8px;border:1px dashed #E0DFD8">No rules yet for this section. <button class="btn btn-ghost btn-sm" onclick="openAddModal('${section}')">Add first rule</button></div>`;
+  } else {
+    rules.forEach(rule=>{
+      html+=buildRuleCard(rule,color);
+    });
+  }
+  container.innerHTML=html;
+}
+
+function buildRuleCard(rule,color){
+  const dot=rule.enabled?color:'#ccc';
+  return `<div class="rule-card" id="rcard-${rule.id}">
+    <div class="rule-header" onclick="toggleEdit('${rule.id}')">
+      <div class="rule-dot" style="background:${dot}"></div>
+      <div class="rule-meta">
+        <div class="rule-title">
+          <span style="color:#888;font-size:10px">${rule.id}</span>
+          ${xe(rule.label)}
+          ${rule.critical?'<span class="tag t-red">CRITICAL</span>':''}
+          <span class="tag t-blue">${rule.tab||''}</span>
+          ${!rule.enabled?'<span class="tag t-gray">Disabled</span>':''}
+        </div>
+        <div class="rule-sub">API: ${xe(rule.apiPath||'—')}</div>
+      </div>
+      <div class="rule-actions">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleEnabled('${rule.id}')">${rule.enabled?'Disable':'Enable'}</button>
+        <button class="btn btn-red btn-sm" onclick="event.stopPropagation();deleteRule('${rule.id}')">Delete</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();duplicateRule('${rule.id}')">Duplicate</button>
+      </div>
+    </div>
+    <div class="rule-edit-body" id="rbody-${rule.id}">
+      <div class="form-row"><div class="form-label">Label</div><input class="inp" value="${xe(rule.label)}" onchange="setField('${rule.id}','label',this.value)"></div>
+      <div class="form-row"><div class="form-label">Tab</div>
+        <select class="inp" onchange="setField('${rule.id}','tab',this.value)">
+          ${['Core & Prime+','Prime+','Core','All'].map(t=>`<option${rule.tab===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-row"><div class="form-label">Critical</div>
+        <select class="inp" onchange="setField('${rule.id}','critical',this.value==='true')">
+          <option value="true"${rule.critical?' selected':''}>Yes — Critical</option>
+          <option value="false"${!rule.critical?' selected':''}>No — Standard</option>
+        </select>
+      </div>
+      <div class="form-row"><div class="form-label">API path</div><input class="inp" value="${xe(rule.apiPath||'')}" onchange="setField('${rule.id}','apiPath',this.value)" placeholder="e.g. kpis.total_leakage_inr"></div>
+      <div class="form-row"><div class="form-label">Spec / Logic</div><textarea class="inp" rows="4" onchange="setField('${rule.id}','spec',this.value)">${xe(rule.spec||'')}</textarea></div>
+      <div class="form-row"><div class="form-label">DB fields</div><textarea class="inp" rows="2" onchange="setField('${rule.id}','fields',this.value)" placeholder="Comma-separated field names from 225 field list">${xe(rule.fields||'')}</textarea></div>
+      <div class="form-row"><div class="form-label">Check note</div><textarea class="inp" rows="2" onchange="setField('${rule.id}','checkNote',this.value)">${xe(rule.checkNote||'')}</textarea></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-purple btn-sm" onclick="saveOneRule('${rule.id}')">Save this rule</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetOne('${rule.id}')">Reset to default</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function xe(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function toggleEdit(id){
+  const b=document.getElementById('rbody-'+id);
+  if(b)b.classList.toggle('open');
+}
+
+function setField(id,field,value){
+  const rule=RULES.find(r=>r.id===id);
+  if(rule)rule[field]=value;
+}
+
+function toggleEnabled(id){
+  const rule=RULES.find(r=>r.id===id);
+  if(!rule)return;
+  rule.enabled=!rule.enabled;
+  saveRules().then(()=>renderSection(rule.section));
+}
+
+function deleteRule(id){
+  if(!confirm('Delete rule '+id+'?'))return;
+  const rule=RULES.find(r=>r.id===id);
+  const sec=rule?.section;
+  RULES=RULES.filter(r=>r.id!==id);
+  saveRules().then(()=>{if(sec)renderSection(sec);});
+}
+
+function duplicateRule(id){
+  const rule=RULES.find(r=>r.id===id);
+  if(!rule)return;
+  const newId=rule.id+'_copy'+Date.now()%1000;
+  const copy={...JSON.parse(JSON.stringify(rule)),id:newId,label:rule.label+' (copy)'};
+  RULES.push(copy);
+  saveRules().then(()=>renderSection(rule.section));
+  toast('Rule duplicated as '+newId);
+}
+
+function saveOneRule(id){
+  saveRules().then(()=>{
+    const el=document.getElementById('rcard-'+id);
+    if(el){el.classList.add('saved-flash');setTimeout(()=>el.classList.remove('saved-flash'),500);}
+    toast('Rule '+id+' saved');
+  });
+}
+
+function resetOne(id){
+  const def=DEFAULT_RULES.find(r=>r.id===id);
+  if(!def){toast('No default for '+id);return;}
+  const idx=RULES.findIndex(r=>r.id===id);
+  if(idx!==-1)RULES[idx]={...def};
+  saveRules().then(()=>{renderSection(def.section);toast('Reset to default');});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADD RULE MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+function openAddModal(section){
+  document.getElementById('modal-title').textContent='Add new rule to '+section;
+  document.getElementById('m-section').value=section;
+  document.getElementById('m-label').value='';
+  document.getElementById('m-tab').value='Prime+';
+  document.getElementById('m-apipath').value='';
+  document.getElementById('m-spec').value='';
+  document.getElementById('m-fields').value='';
+  document.getElementById('m-note').value='';
+  document.getElementById('m-critical').value='false';
+  document.getElementById('m-checktype').value='presence';
+  document.getElementById('m-range-fields').style.display='none';
+  document.getElementById('add-rule-modal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('add-rule-modal').classList.remove('open');}
+
+document.getElementById('m-checktype').addEventListener('change',function(){
+  document.getElementById('m-range-fields').style.display=this.value==='range'?'grid':'none';
+});
+
+function saveNewRule(){
+  const label=document.getElementById('m-label').value.trim();
+  if(!label){toast('Please enter a label');return;}
+  const section=document.getElementById('m-section').value;
+  const id=section.slice(0,2).toUpperCase()+'_'+Date.now().toString(36).toUpperCase();
+  const rule={
+    id,section,
+    tab:document.getElementById('m-tab').value,
+    label,
+    critical:document.getElementById('m-critical').value==='true',
+    enabled:true,
+    apiPath:document.getElementById('m-apipath').value,
+    spec:document.getElementById('m-spec').value,
+    fields:document.getElementById('m-fields').value,
+    checkNote:document.getElementById('m-note').value,
+    checkType:document.getElementById('m-checktype').value,
+  };
+  const ct=rule.checkType;
+  if(ct==='range'){
+    rule.rangeField=document.getElementById('m-rangefield').value;
+    rule.rangeMin=parseFloat(document.getElementById('m-rangemin').value)||0;
+    rule.rangeMax=parseFloat(document.getElementById('m-rangemax').value)||100;
+  }
+  RULES.push(rule);
+  saveRules().then(()=>{
+    closeModal();
+    renderSection(section);
+    toast('✓ Rule '+id+' added to '+section);
+    setTimeout(()=>{
+      const el=document.getElementById('rbody-'+id);
+      if(el)el.classList.add('open');
+    },200);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// IMPORT / EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
+function exportAllRules(){
+  const blob=new Blob([JSON.stringify({version:3,exported:new Date().toISOString(),rules:RULES},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='enkash_rules_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  toast('Rules exported');
+}
+function importRules(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const imported=data.rules||data;
+      if(!Array.isArray(imported))throw new Error('Invalid format');
+      if(!confirm(`Import ${imported.length} rules? Same IDs will be updated.`))return;
+      const m={};RULES.forEach(r=>m[r.id]=r);
+      imported.forEach(r=>m[r.id]=r);
+      RULES=Object.values(m);
+      saveRules();
+      toast(`✓ Imported ${imported.length} rules`);
+    }catch(e2){toast('Import failed: '+e2.message);}
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CAPTURED CALLS
+// ═══════════════════════════════════════════════════════════════════════════
+let capturedCalls=[];
+
+function parseCaptured(){
+  const raw=document.getElementById('captured-json').value.trim();
+  if(!raw){toast('Paste captured JSON first');return;}
+  try{
+    const parsed=JSON.parse(raw);
+    capturedCalls=Array.isArray(parsed)?parsed:Object.values(parsed);
+    showCallsPreview();
+    document.getElementById('parse-status').innerHTML=`<span style="color:#16a34a">✓ Parsed ${capturedCalls.length} API calls successfully</span>`;
+  }catch(e){
+    document.getElementById('parse-status').innerHTML=`<span style="color:#DC2626">✗ Invalid JSON: ${e.message}</span>`;
+  }
+}
+
+function showCallsPreview(){
+  document.getElementById('calls-preview').style.display='';
+  document.getElementById('calls-count-label').textContent=`${capturedCalls.length} calls captured`;
+  document.getElementById('calls-list').innerHTML=capturedCalls.map(c=>`
+    <div class="req-row">
+      <div style="font-weight:700;color:#7C3AED;width:38px;flex-shrink:0">${c.method||'GET'}</div>
+      <div class="req-url" title="${c.url}">${c.url}</div>
+      <div style="color:#aaa;font-size:10px;flex-shrink:0">${c.ms?c.ms+'ms':''}</div>
+      <div style="color:#888;font-size:10px;flex-shrink:0;width:50px;text-align:right">${c.status?c.status:''}</div>
+    </div>`).join('');
+}
+
+function loadDemo(){
+  const s=[
+    {method:'GET',url:'/api/summary?state=all&start=2025-12&end=2026-05',params:{state:'all',start:'2025-12',end:'2026-05'},status:200,ms:145,
+     response:{portfolio_value_inr:208746643,avg_bill_per_ca_inr:206679.84,active_cas:101,paid_via_platform_pct:99.26,
+       funnel:{active_cas:115,expected_bills:638,bills_generated:605,bills_paid:454,fetch_rate:94.83,conversion:75.04},
+       payment_status:{paid:454,pending:0,on_hold:0,failed:0,total_approved:454},
+       action_required:{fetch_failed:33,not_generated:25,copy_pending:77,duplicate:0,meter_reading_alert:190}}},
+    {method:'GET',url:'/api/capital-plan/weekly?state=all&branch=all&start=2025-12&end=2026-05',
+     params:{state:'all',branch:'all',start:'2025-12',end:'2026-05'},status:200,ms:210, // BUG 1: period params on capital plan
+     response:{month:'2026-06',as_of_date:'2026-06-29',total_unpaid_inr:10300000,
+       weeks:[{week_num:1,week_start:'2026-06-01',week_end:'2026-06-07',unpaid:1600,overdue:0,count:12,unpaid_count:1},
+              {week_num:2,week_start:'2026-06-08',week_end:'2026-06-14',unpaid:43000,overdue:0,count:11,unpaid_count:2},
+              {week_num:3,week_start:'2026-06-15',week_end:'2026-06-21',unpaid:5100000,overdue:0,count:39,unpaid_count:11},
+              {week_num:4,week_start:'2026-06-22',week_end:'2026-06-30',unpaid:4700000,overdue:0,count:37,unpaid_count:12}
+       // BUG 2: 1600+43000+5100000+4700000=9844600 ≠ 10300000
+       ]}},
+    {method:'GET',url:'/api/leakage/summary?state=all&start=2025-12&end=2026-05',params:{state:'all',start:'2025-12',end:'2026-05'},status:200,ms:380,
+     response:{period:{start:'2025-12',end:'2026-05'},
+       kpis:{total_leakage_inr:94420,cas_affected:15,avg_leakage_per_ca_inr:945,weighted_avg_pf:0.912,lps_hit_rate_pct:22.3},
+       // BUG 3: 94420/15=6295 but API says 945 — wrong denominator
+       by_type:[{type:'Excess demand',amount:1244,share_pct:1.32},{type:'PF penalty',amount:19656,share_pct:20.82},{type:'Late payment',amount:73027,share_pct:77.35},{type:'Arrear LPSC',amount:493,share_pct:0.52}]}},
+    {method:'GET',url:'/api/savings/summary?state=all&start=2025-12&end=2026-05',params:{state:'all',start:'2025-12',end:'2026-05'},status:200,ms:290,
+     response:{period:{start:'2025-12',end:'2026-05'},
+       summary:{total_bill_generated_inr:208746643,paid_via_platform_inr:207209938,paid_via_platform_pct:99.26,clean_bill_amount_inr:207802440},
+       kpis:{clean_bill_rate_pct:84,affected_bill_rate_pct:16,avoidable_charges_inr:94420,contract_revision_saving_inr:1144,pf_improvement_saving_inr:19656},
+       incentives:{digital_payment_benefit_inr:3492,early_payment_discount_inr:4480,pf_incentive_earned_inr:6298,total_earned_inr:14270,total_incentive_potential_inr:225037,potential_upside_inr:210767}}},
+    {method:'GET',url:'/api/trends/monthly?state=all&start=2025-12&end=2026-05',params:{state:'all',start:'2025-12',end:'2026-05'},status:200,ms:195,
+     response:{months:[{month:'2025-12',total:29450000,rolling_3m_avg:null},{month:'2026-01',total:34500000,rolling_3m_avg:null},{month:'2026-02',total:34500000,rolling_3m_avg:32816666},{month:'2026-03',total:34100000,rolling_3m_avg:34366666},{month:'2026-04',total:41100000,rolling_3m_avg:36566666},{month:'2026-05',total:34900000,rolling_3m_avg:36700000},{month:'2026-06',total:null},{month:'2026-07',total:null}]}}
+  ];
+  document.getElementById('captured-json').value=JSON.stringify(s,null,2);
+  capturedCalls=s;
+  showCallsPreview();
+  document.getElementById('parse-status').innerHTML='<span style="color:#16a34a">✓ Demo loaded with 3 bugs — run validation to find them</span>';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RUN
+// ═══════════════════════════════════════════════════════════════════════════
+let allFindings=[];
+
+function refreshRunReadiness(){
+  const enabled=RULES.filter(r=>r.enabled).length;
+  const el=document.getElementById('run-readiness');
+  if(!el)return;
+  el.innerHTML=capturedCalls.length?
+    `<div class="notice-ok">✓ ${capturedCalls.length} API calls loaded from: ${[...new Set(capturedCalls.map(c=>c.url.split('?')[0].split('/').slice(-1)[0]))].filter(Boolean).join(', ')}</div>`:
+    `<div class="notice-warn">⚠ No API calls loaded — go to Step 1 first</div>`;
+  const arc=document.getElementById('active-rules-count');if(arc)arc.textContent=enabled;
+  const cc=document.getElementById('captures-count');if(cc)cc.textContent=capturedCalls.length;
+}
+
+async function runAll(){
+  if(!capturedCalls.length){toast('Load API calls first (Step 1)');switchPane('capture');return;}
+  const btn=document.getElementById('run-btn');
+  btn.disabled=true;btn.textContent='Running…';
+  document.getElementById('run-progress').innerHTML='<div><span class="spin"></span>Checking '+RULES.filter(r=>r.enabled).length+' rules…</div>';
+  const findings=[];
+  RULES.filter(r=>r.enabled).forEach(rule=>{
+    try{const r=checkRule(rule);findings.push({...rule,...r});}
+    catch(e){findings.push({...rule,status:'warn',msg:'Check error: '+e.message});}
+  });
+  document.getElementById('run-progress').innerHTML='<div><span class="spin"></span>AI analysis…</div>';
+  try{const ai=await aiCheck(capturedCalls,RULES.filter(r=>r.enabled));findings.push(...ai);}
+  catch(e){findings.push({id:'AI0',section:'AI Analysis',label:'AI analysis',status:'warn',msg:'AI unavailable: '+e.message});}
+  allFindings=findings;
+  btn.disabled=false;btn.textContent='▶ Run validation now';
+  document.getElementById('run-progress').innerHTML='';
+  showResults(findings);
+}
+
+// ─ Rule check engine ─
+function checkRule(rule){
+  const near=(a,b,p=1)=>b===0?Math.abs(a)<1:Math.abs(a-b)/Math.abs(b)*100<=p;
+  function deepGet(obj,path){let c=obj;for(const k of path.split('.').filter(p=>!p.includes('['))){if(c==null)return undefined;c=c[k];}return c;}
+  function findIn(key){for(const c of capturedCalls){const v=deepGet(c.response||{},key);if(v!==undefined)return v;}return undefined;}
+  function findCall(pat){return capturedCalls.find(c=>c.url.includes(pat));}
+  const ct=rule.checkType;
+
+  if(ct==='range'){
+    const v=findIn(rule.rangeField);
+    if(v===undefined)return{status:'na',msg:`${rule.rangeField} not found — navigate relevant tab`};
+    if(v<rule.rangeMin||v>rule.rangeMax)return{status:'fail',msg:`${rule.rangeField}=${v} outside [${rule.rangeMin},${rule.rangeMax}]`,fix:rule.checkNote};
+    if(rule.rangeField==='weighted_avg_pf'&&v>0.97)return{status:'warn',msg:`PF=${v} suspiciously high — verify KVAH-weighted`};
+    return{status:'pass',msg:`${rule.rangeField}=${typeof v==='number'?v.toLocaleString('en-IN'):v} in range ✓`};
+  }
+  if(ct==='by_type_sum'){
+    const lk=findCall('leakage');if(!lk)return{status:'na',msg:'No leakage call captured'};
+    if(!lk.response?.by_type)return{status:'warn',msg:'by_type missing from leakage response'};
+    if(rule.id==='LK4'){
+      const sum=lk.response.by_type.reduce((s,t)=>s+(t.share_pct||0),0);
+      if(sum<99||sum>101)return{status:'fail',msg:`Share sum=${sum.toFixed(2)}% ≠ ~100%`,fix:rule.checkNote};
+      return{status:'pass',msg:`Share sum=${sum.toFixed(2)}% ✓`};
+    }
+    const tot=lk.response?.kpis?.total_leakage_inr;
+    const typeSum=lk.response.by_type.reduce((s,t)=>s+(t.amount||0),0);
+    if(tot===undefined)return{status:'warn',msg:'kpis.total_leakage_inr missing'};
+    if(!near(typeSum,tot,1))return{status:'fail',msg:`by_type sum ₹${typeSum.toLocaleString('en-IN')} ≠ total ₹${tot.toLocaleString('en-IN')} (${(Math.abs(typeSum-tot)/tot*100).toFixed(1)}%)`,fix:rule.checkNote};
+    return{status:'pass',msg:`₹${typeSum.toLocaleString('en-IN')} ≈ ₹${tot.toLocaleString('en-IN')} ✓`};
+  }
+  if(ct==='derivation'){
+    if(rule.id==='LK3'){
+      const lk=findCall('leakage');if(!lk?.response?.kpis)return{status:'na',msg:'No leakage KPIs'};
+      const{total_leakage_inr:tot,cas_affected:cas,avg_leakage_per_ca_inr:avg}=lk.response.kpis;
+      if(!tot||!cas||!avg)return{status:'warn',msg:'Missing total/cas_affected/avg fields'};
+      const d=tot/cas;const p=Math.abs(d-avg)/avg*100;
+      if(p>3)return{status:'fail',msg:`avg=${avg?.toLocaleString('en-IN')} but total/cas_affected=₹${Math.round(d).toLocaleString('en-IN')} — ${p.toFixed(1)}% off`,fix:rule.checkNote};
+      return{status:'pass',msg:`₹${tot.toLocaleString('en-IN')}/${cas}=₹${Math.round(d).toLocaleString('en-IN')} ≈ ${avg.toLocaleString('en-IN')} ✓`};
+    }
+    return{status:'warn',msg:rule.checkNote||'Manual verification needed'};
+  }
+  if(ct==='sum_to_100'){
+    const fs=rule.sumFields||[];
+    const vs=fs.map(f=>findIn(f));
+    if(vs.some(v=>v===undefined))return{status:'na',msg:`Fields not found: ${fs.join(', ')}`};
+    const sum=vs.reduce((a,b)=>a+b,0);
+    if(Math.abs(sum-100)>1)return{status:'fail',msg:`${vs.join('%+')}%=${sum.toFixed(2)}% ≠ 100%`,fix:rule.checkNote};
+    return{status:'pass',msg:`${vs.join('%+')}%=${sum.toFixed(2)}% ✓`};
+  }
+  if(ct==='cross_tab'){
+    const fs=rule.crossFields||[];
+    const found={};
+    capturedCalls.forEach(c=>{fs.forEach(f=>{const v=deepGet(c.response||{},f);if(v!==undefined)found[f]=v;});});
+    if(fs.some(f=>found[f]===undefined))return{status:'na',msg:`Need both leakage+savings calls for: ${fs.join(' vs ')}`};
+    const[a,b]=fs.map(f=>found[f]);const p=Math.abs(a-b)/Math.max(a,1)*100;
+    if(p>1)return{status:'fail',msg:`${fs[0]}=₹${a?.toLocaleString('en-IN')} ≠ ${fs[1]}=₹${b?.toLocaleString('en-IN')} (${p.toFixed(1)}%)`,fix:'Consolidate to single leakage_facts view'};
+    return{status:'pass',msg:`₹${a?.toLocaleString('en-IN')} ≈ ₹${b?.toLocaleString('en-IN')} ✓`};
+  }
+  if(ct==='no_period_param'){
+    const cp=capturedCalls.filter(c=>c.url.includes('capital')||c.url.includes('weekly'));
+    if(!cp.length)return{status:'na',msg:'No capital plan call captured'};
+    const bad=cp.filter(c=>c.params&&(c.params.start_date||c.params.end_date||c.params.view||c.params.period||c.params.start||c.params.end));
+    if(bad.length)return{status:'fail',msg:`${bad.length} capital plan call(s) include period params: ${JSON.stringify(bad[0].params)}`,fix:'Remove start/end/view/period from capital plan call'};
+    return{status:'pass',msg:`${cp.length} capital plan call(s) — no period params ✓`};
+  }
+  if(ct==='week_reconcile'){
+    const cp=capturedCalls.find(c=>c.response?.weeks&&c.response?.total_unpaid_inr!==undefined);
+    if(!cp)return{status:'na',msg:'No capital plan with weeks[] and total_unpaid_inr'};
+    const sum=cp.response.weeks.reduce((s,w)=>s+(w.unpaid||0),0);
+    const tot=cp.response.total_unpaid_inr;const delta=Math.abs(sum-tot);
+    if(delta>1)return{status:'fail',msg:`weeks sum ₹${sum.toLocaleString('en-IN')} ≠ total ₹${tot.toLocaleString('en-IN')} (Δ₹${delta.toLocaleString('en-IN')})`,fix:'API must assert reconciliation before responding'};
+    return{status:'pass',msg:`₹${sum.toLocaleString('en-IN')} = ₹${tot.toLocaleString('en-IN')} ✓`};
+  }
+  if(ct==='exact_count'){
+    const cp=capturedCalls.find(c=>c.response?.weeks||c.response?.[rule.field]);
+    const arr=cp?.response?.[rule.field||'weeks'];
+    if(!arr)return{status:'na',msg:`No ${rule.field||'weeks'} array`};
+    if(arr.length!==rule.expectedCount)return{status:'fail',msg:`${rule.field} has ${arr.length} items, expected ${rule.expectedCount}`,fix:'Use cross-join VALUES to guarantee all rows'};
+    return{status:'pass',msg:`${arr.length} ${rule.field} rows ✓`};
+  }
+  if(ct==='subset_check'){
+    const cp=capturedCalls.find(c=>c.response?.weeks);if(!cp)return{status:'na',msg:'No weeks data'};
+    const bad=cp.response.weeks.filter(w=>(w.overdue||0)>(w.unpaid||0));
+    if(bad.length)return{status:'fail',msg:`Week(s) ${bad.map(w=>w.week_num).join(',')} overdue>unpaid`,fix:'overdue is subset of unpaid — check WHERE clause'};
+    return{status:'pass',msg:'overdue ≤ unpaid for all weeks ✓'};
+  }
+  if(ct==='week_boundary'){
+    const cp=capturedCalls.find(c=>c.response?.weeks);
+    if(!cp?.response?.weeks?.[0]?.week_start)return{status:'na',msg:'No week_start field'};
+    const d=new Date(cp.response.weeks[0].week_start).getDate();
+    if(d!==1)return{status:'warn',msg:`W1 starts day ${d}, expected day 1 — ISO week buckets?`,fix:'Week 1 must start on day 1 of month'};
+    return{status:'pass',msg:`W1 starts on day 1 ✓`};
+  }
+  if(ct==='field_present'){
+    const f=rule.field;
+    const found=capturedCalls.some(c=>deepGet(c.response||{},f)!==undefined);
+    if(!found)return{status:'warn',msg:`${f} not found in any captured response`,fix:rule.checkNote};
+    return{status:'pass',msg:`${f} present ✓`};
+  }
+  if(ct==='funnel'){
+    const sm=capturedCalls.find(c=>c.response?.funnel);if(!sm)return{status:'na',msg:'No funnel data in summary'};
+    const f=sm.response.funnel;
+    if(f.bills_paid>f.bills_generated)return{status:'fail',msg:`bills_paid(${f.bills_paid})>bills_generated(${f.bills_generated})`,fix:'Paid count must filter to generated bills set only'};
+    if(f.bills_generated>f.expected_bills*1.05)return{status:'warn',msg:`bills_generated(${f.bills_generated})>expected(${f.expected_bills}) — possible duplicate fetches`};
+    return{status:'pass',msg:`Funnel: ${f.expected_bills}→${f.bills_generated}→${f.bills_paid} ✓`};
+  }
+  if(ct==='sum_reconcile'){
+    const sm=capturedCalls.find(c=>c.response?.payment_status);if(!sm)return{status:'na',msg:'No payment_status'};
+    const ps=sm.response.payment_status;
+    const sum=(ps.paid||0)+(ps.pending||0)+(ps.on_hold||0)+(ps.failed||0);
+    const tot=ps.total_approved||0;
+    if(tot&&Math.abs(sum-tot)>2)return{status:'fail',msg:`Status sum ${sum} ≠ total_approved ${tot}`,fix:'Check for unrecognised status values'};
+    return{status:'pass',msg:`Status sum ${sum} = total_approved ${tot} ✓`};
+  }
+  if(ct==='component_sum'){
+    const sv=capturedCalls.find(c=>c.response?.incentives?.total_earned_inr!==undefined);if(!sv)return{status:'na',msg:'No incentives data'};
+    const inc=sv.response.incentives;
+    const parts=(inc.digital_payment_benefit_inr||0)+(inc.early_payment_discount_inr||0)+(inc.pf_incentive_earned_inr||0);
+    const tot=inc.total_earned_inr;
+    if(!near(parts,tot,2))return{status:'fail',msg:`Components ₹${parts.toLocaleString('en-IN')} ≠ total_earned ₹${tot.toLocaleString('en-IN')}`,fix:rule.checkNote};
+    return{status:'pass',msg:`₹${parts.toLocaleString('en-IN')} ≈ ₹${tot.toLocaleString('en-IN')} ✓`};
+  }
+  if(ct==='reconcile'){
+    const sv=capturedCalls.find(c=>c.response?.summary?.total_bill_generated_inr);if(!sv)return{status:'na',msg:'No savings summary'};
+    const clean=sv.response.summary.clean_bill_amount_inr;
+    const avoid=sv.response.kpis?.avoidable_charges_inr||findIn('avoidable_charges_inr');
+    const total=sv.response.summary.total_bill_generated_inr;
+    if(!clean||!avoid)return{status:'warn',msg:'Missing clean or avoidable fields'};
+    const recon=clean+avoid;
+    if(!near(recon,total,2))return{status:'warn',msg:`clean+avoidable=₹${recon.toLocaleString('en-IN')} vs total=₹${total.toLocaleString('en-IN')}`};
+    return{status:'pass',msg:`Clean+Avoidable≈Total ✓`};
+  }
+  if(ct==='sanity_pct'){
+    const num=findIn(rule.numerator),den=findIn(rule.denominator);
+    if(num===undefined||den===undefined)return{status:'na',msg:`Missing ${rule.numerator||rule.denominator}`};
+    const p=den>0?num/den*100:0;
+    if(p>rule.maxPct)return{status:'warn',msg:`${(p).toFixed(2)}% > max ${rule.maxPct}%`,fix:rule.checkNote};
+    return{status:'pass',msg:`${p.toFixed(2)}% ≤ ${rule.maxPct}% ✓`};
+  }
+  if(ct==='format_check'){
+    const t=capturedCalls.find(c=>c.response?.months);if(!t)return{status:'na',msg:'No trend data'};
+    const hy=t.response.months.some(m=>(m.month||'').match(/^\d{4}-\d{2}$/));
+    if(hy)return{status:'warn',msg:'Month values in YYYY-MM — frontend must strip year for axis labels',fix:'Format: month.split("-")[1] → "01"→"Jan"'};
+    return{status:'pass',msg:'Month format OK ✓'};
+  }
+  if(ct==='null_vs_zero'){
+    const t=capturedCalls.find(c=>c.response?.months);if(!t)return{status:'na',msg:'No trend data'};
+    const m=t.response.months;
+    const nulls=m.filter(x=>x.total===null||x.total===undefined).length;
+    const zeros=m.filter(x=>x.total===0).length;
+    return{status:'pass',msg:`${m.length} slots: ${nulls} null, ${zeros} zero. Verify null=future, 0=past-no-bills`};
+  }
+  if(ct==='param_isolation'){
+    const cp=capturedCalls.filter(c=>c.url.includes('capital')||c.url.includes('weekly'));
+    if(!cp.length)return{status:'na',msg:'No capital plan call'};
+    const bad=cp.some(c=>c.params&&(c.params.start||c.params.end||c.params.view));
+    if(bad)return{status:'fail',msg:'Capital plan call contains period params',fix:'Capital plan must not receive period params'};
+    return{status:'pass',msg:'Capital plan isolated from period filter ✓'};
+  }
+  if(ct==='param_consistency'){
+    const states=capturedCalls.map(c=>c.params?.state).filter(Boolean);
+    const unique=[...new Set(states)];
+    if(unique.length>1)return{status:'warn',msg:`Different state params: ${unique.join(', ')}`};
+    return{status:'pass',msg:`Consistent state param: ${unique[0]||'(none)'} ✓`};
+  }
+  if(ct==='param_check'){return{status:'warn',msg:rule.checkNote||'Manual verification required'};}
+  if(ct==='ai_only'){return{status:'warn',msg:'Rule delegated to AI analysis — see AI findings below'};}
+  return{status:'warn',msg:rule.checkNote||'Verify manually'};
+}
+
+async function aiCheck(calls,rules){
+  const snap=calls.slice(0,5).map(c=>({url:c.url,params:c.params,keys:Object.keys(c.response||{}),s:JSON.stringify(c.response||{}).slice(0,800)}));
+  const rsn=rules.slice(0,10).map(r=>({id:r.id,label:r.label,spec:(r.spec||'').slice(0,180)}));
+  const prompt=`Enkash analytics validator. Find 3-5 additional issues NOT caught by deterministic rules.
+
+ACTIVE RULES (sample): ${JSON.stringify(rsn,null,1)}
+
+KEY SPEC (always check):
+- LPS: use MAX(late_payment_amount,current_lps) not addition for overlapping DISCOMs
+- Weighted PF = SUM(kvah×pf)/SUM(kvah) — KVAH-weighted not simple average
+- Contract saving: per-CA P90 computation not portfolio MDI
+- Dedup: ROW_NUMBER() OVER (PARTITION BY enkash_id ORDER BY bill_fetch_timestamp DESC)=1
+- Estimated bills (Bill Basis=E) excluded from PF saving
+- Rolling 3M avg null for first 2 months
+- Portfolio value uses bill_amount (Bill Amount) not fetched_amount as primary
+- Paid via platform primary = Billpay Status=SUCCESS
+
+CAPTURED: ${JSON.stringify(snap,null,1)}
+
+JSON only (3-5 items):
+[{"id":"AI1","section":"AI Analysis","label":"label","status":"fail"|"warn"|"pass","msg":"finding","fix":"fix"}]`;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+  const d=await r.json();
+  const t=(d.content||[]).map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+  return JSON.parse(t);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════════════════════════════
+function showResults(findings){
+  document.getElementById('pre-run-area').style.display='none';
+  document.getElementById('results-area').style.display='block';
+  const pass=findings.filter(f=>f.status==='pass').length;
+  const fail=findings.filter(f=>f.status==='fail').length;
+  const warn=findings.filter(f=>f.status==='warn').length;
+  const na=findings.filter(f=>f.status==='na').length;
+  document.getElementById('results-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${findings.length}</div><div class="stat-lbl">Checks</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#16a34a">${pass}</div><div class="stat-lbl">✓ Correct</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#DC2626">${fail}</div><div class="stat-lbl">✗ Violations</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#B45309">${warn}</div><div class="stat-lbl">⚠ Warnings</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#6B7280">${na}</div><div class="stat-lbl">— N/A</div></div>`;
+  renderResults(findings,'all');
+}
+
+function renderResults(findings,filter){
+  const shown=filter==='all'?findings:findings.filter(f=>f.status===filter);
+  const bySec={};
+  shown.forEach(f=>{const s=f.section||'Other';if(!bySec[s])bySec[s]=[];bySec[s].push(f);});
+  document.getElementById('results-list').innerHTML=Object.entries(bySec).map(([sec,items])=>{
+    const c=SEC_COLORS[sec]||'#7C3AED';
+    const sf=items.filter(i=>i.status==='fail').length;
+    return `<div style="margin-bottom:16px">
+      <div class="section-sep"><div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>${sec}${sf?` — <span style="color:#DC2626">${sf} violation${sf>1?'s':''}</span>`:' — <span style="color:#16a34a">✓ clean</span>'}</div>
+      ${items.map(f=>{
+        const ic=f.status==='pass'?'r-pass':f.status==='fail'?'r-fail':f.status==='warn'?'r-warn':'r-na';
+        const it=f.status==='pass'?'✓':f.status==='fail'?'✗':f.status==='warn'?'!':'–';
+        const tc=f.status==='pass'?'t-green':f.status==='fail'?'t-red':f.status==='warn'?'t-amber':'t-gray';
+        const tl=f.status==='pass'?'CORRECT':f.status==='fail'?'VIOLATION':f.status==='warn'?'WARNING':'N/A';
+        return `<div class="result-item">
+          <div class="result-head" onclick="this.nextElementSibling.classList.toggle('open')">
+            <div class="result-icon ${ic}">${it}</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+                <span style="color:#888;font-size:10px">${f.id}</span> ${f.label||''}
+                <span class="tag ${tc}">${tl}</span>
+                ${f.critical?'<span class="tag t-red">CRITICAL</span>':''}
+                ${f.tab?`<span class="tag t-blue">${f.tab}</span>`:''}
+              </div>
+              <div style="font-size:11px;color:#666;margin-top:3px">${f.msg||''}</div>
+              ${f.fields?`<div style="font-size:10px;color:#aaa;margin-top:2px">Fields: ${f.fields}</div>`:''}
+            </div>
+          </div>
+          <div class="result-body">
+            ${f.spec?`<div style="font-size:11px;font-weight:600;color:#888;margin-bottom:4px">SPEC RULE</div><div class="spec-highlight">${f.spec}</div>`:''}
+            ${f.msg?`<div style="font-size:11px;font-weight:600;color:#888;margin-bottom:4px">FINDING</div><div class="${f.status==='fail'?'finding-fail':'finding-ok'}">${f.msg}</div>`:''}
+            ${f.fix?`<div class="fix-note">🔧 <strong>Fix:</strong> ${f.fix}</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')||'<div style="padding:20px;text-align:center;color:#888">No findings in this category</div>';
+}
+
+function filterResults(filter,el){
+  document.querySelectorAll('.tbar-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderResults(allFindings,filter);
+}
+
+function resetRun(){
+  document.getElementById('pre-run-area').style.display='block';
+  document.getElementById('results-area').style.display='none';
+  refreshRunReadiness();
+}
+
+function exportReport(){
+  const pass=allFindings.filter(f=>f.status==='pass').length;
+  const fail=allFindings.filter(f=>f.status==='fail').length;
+  const lines=[`Enkash Analytics Validation Report`,`${new Date().toISOString()}`,`Calls: ${capturedCalls.map(c=>c.url).join(' | ')}`,``,`SUMMARY: ${allFindings.length} checks — ${pass} passed, ${fail} failed`,``,
+    ...allFindings.map(f=>[`${f.status.toUpperCase().padEnd(8)} [${f.id}] ${f.label}`,`  ${f.msg||''}`,f.fix?`  FIX: ${f.fix}`:'',''].filter(Boolean).join('\n'))].join('\n');
+  navigator.clipboard.writeText(lines).then(()=>toast('Report copied to clipboard'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+renderFields(FIELDS);
+loadRules();
+</script>
+</body>
+</html>
